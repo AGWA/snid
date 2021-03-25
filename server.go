@@ -3,12 +3,9 @@ package main
 import (
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net"
-	"strconv"
-	"syscall"
 	"time"
 
 	"src.agwa.name/go-listener/proxy"
@@ -16,8 +13,7 @@ import (
 )
 
 type Server struct {
-	AllowBackends   []*net.IPNet
-	BackendPort     int
+	Backend         BackendDialer
 	ProxyProtocol   bool
 	DefaultHostname string
 }
@@ -59,12 +55,7 @@ func (server *Server) handleConnection(clientConn net.Conn) {
 		return
 	}
 
-	dialer := net.Dialer{
-		Timeout: 5 * time.Second,
-		Control: server.dialControl,
-	}
-
-	backendConn, err := dialer.Dial("tcp", net.JoinHostPort(clientHello.ServerName, strconv.Itoa(server.BackendPort)))
+	backendConn, err := server.Backend.Dial(clientHello.ServerName)
 	if err != nil {
 		log.Printf("Ignoring connection from %s because dialing backend failed: %s", clientConn.RemoteAddr(), err)
 		return
@@ -81,7 +72,7 @@ func (server *Server) handleConnection(clientConn net.Conn) {
 
 	go func() {
 		io.Copy(backendConn, clientConn)
-		backendConn.(*net.TCPConn).CloseWrite()
+		backendConn.CloseWrite()
 	}()
 
 	io.Copy(clientConn, backendConn)
@@ -99,21 +90,4 @@ func (server *Server) Serve(listener net.Listener) error {
 		}
 		go server.handleConnection(conn)
 	}
-}
-
-func (server *Server) dialControl(network string, address string, c syscall.RawConn) error {
-	host, _, err := net.SplitHostPort(address)
-	if err != nil {
-		return err
-	}
-	ipaddress := net.ParseIP(host)
-	if ipaddress == nil {
-		return fmt.Errorf("%s is not a valid IP address", host)
-	}
-	for _, cidr := range server.AllowBackends {
-		if cidr.Contains(ipaddress) {
-			return nil
-		}
-	}
-	return fmt.Errorf("%s is not an allowed backend", ipaddress)
 }

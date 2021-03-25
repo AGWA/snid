@@ -24,15 +24,35 @@ func parseCIDRs(strings []string) ([]*net.IPNet, error) {
 func main() {
 	var (
 		allow           = flag.String("allow", "", "Comma-separated list of CIDRs to allow")
-		backendPort     = flag.Int("backend-port", 443, "Port number of backend host")
+		backend         = flag.String("backend", "", ":PORT or /path/to/socket/dir for backends")
 		proxy           = flag.Bool("proxy", false, "Use PROXY protocol when talking to backend")
 		defaultHostname = flag.String("default-hostname", "", "Default hostname if client does not provide SNI")
 	)
 	flag.Parse()
 
-	allowCIDRs, err := parseCIDRs(strings.Split(*allow, ","))
-	if err != nil {
-		log.Fatal(err)
+	server := &Server{
+		ProxyProtocol:   *proxy,
+		DefaultHostname: *defaultHostname,
+	}
+
+	if strings.HasPrefix(*backend, "/") {
+		server.Backend = &UnixDialer{Directory: *backend}
+	} else if strings.HasPrefix(*backend, ":") {
+		port := strings.TrimPrefix(*backend, ":")
+		if *allow == "" {
+			log.Fatal("-allow must be specified when you use TCP backends")
+		}
+		allowedCIDRs, err := parseCIDRs(strings.Split(*allow, ","))
+		if err != nil {
+			log.Fatal(err)
+		}
+		server.Backend = &TCPDialer{Port: port, Allowed: allowedCIDRs}
+	} else {
+		log.Fatal("-backend must be a TCP port number (e.g. :443) or a path to a socket directory")
+	}
+
+	if flag.NArg() == 0 {
+		log.Fatal("At least one listener must be specified on the command line")
 	}
 
 	ourListeners, err := listener.OpenAll(flag.Args())
@@ -40,13 +60,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer listener.CloseAll(ourListeners)
-
-	server := &Server{
-		AllowBackends:   allowCIDRs,
-		BackendPort:     *backendPort,
-		ProxyProtocol:   *proxy,
-		DefaultHostname: *defaultHostname,
-	}
 
 	for _, listener := range ourListeners {
 		go serve(listener, server)
