@@ -29,7 +29,7 @@ func (backend *TCPDialer) dialControl(network string, address string, c syscall.
 	return fmt.Errorf("%s is not an allowed backend", ipaddress)
 }
 
-func (backend *TCPDialer) Dial(hostname string) (BackendConn, error) {
+func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (BackendConn, error) {
 	dialer := net.Dialer{
 		Timeout: 5 * time.Second,
 		Control: backend.dialControl,

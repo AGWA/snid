@@ -10,5 +10,5 @@ type BackendConn interface {
 }
 
 type BackendDialer interface {
-	Dial(string) (BackendConn, error)
+	Dial(string, net.Addr) (BackendConn, error)
 }

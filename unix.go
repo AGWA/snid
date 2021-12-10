@@ -12,7 +12,7 @@ type UnixDialer struct {
 	Directory string
 }
 
-func (backend *UnixDialer) Dial(origHostname string) (BackendConn, error) {
+func (backend *UnixDialer) Dial(origHostname string, clientAddress net.Addr) (BackendConn, error) {
 	hostname := backend.canonicalizeHostname(origHostname)
 	if hostname == "" {
 		return nil, fmt.Errorf("no backend found for %q", origHostname)
