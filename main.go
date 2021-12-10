@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"strings"
@@ -23,11 +24,12 @@ func parseCIDRs(strings []string) ([]*net.IPNet, error) {
 
 func main() {
 	var (
-		listenArgs      []string
-		proxy           bool
-		backendArg      string
-		allowArgs       []string
-		defaultHostname string
+		listenArgs       []string
+		proxy            bool
+		backendArg       string
+		ipv6SourcePrefix net.IP
+		allowArgs        []string
+		defaultHostname  string
 	)
 
 	flag.Func("listen", "Socket to listen on (repeatable)", func(arg string) error {
@@ -36,6 +38,16 @@ func main() {
 	})
 	flag.BoolVar(&proxy, "proxy", false, "Use PROXY protocol when talking to backend")
 	flag.StringVar(&backendArg, "backend", "", ":PORT or /path/to/socket/dir for backends")
+	flag.Func("ipv6-source-prefix", "IPv6 source prefix for embedding client IPv4 address", func(arg string) error {
+		ipv6SourcePrefix = net.ParseIP(arg)
+		if ipv6SourcePrefix == nil {
+			return fmt.Errorf("not a valid IP address")
+		}
+		if ipv6SourcePrefix.To4() != nil {
+			return fmt.Errorf("not an IPv6 address")
+		}
+		return nil
+	})
 	flag.Func("allow", "CIDR of allowed backends (repeatable)", func(arg string) error {
 		allowArgs = append(allowArgs, arg)
 		return nil
@@ -59,7 +71,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		server.Backend = &TCPDialer{Port: port, Allowed: allowed}
+		server.Backend = &TCPDialer{Port: port, Allowed: allowed, IPv6SourcePrefix: ipv6SourcePrefix}
 	} else {
 		log.Fatal("-backend must be a TCP port number (e.g. :443) or a path to a socket directory")
 	}
