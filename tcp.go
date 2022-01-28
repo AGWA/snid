@@ -14,7 +14,7 @@ type TCPDialer struct {
 	IPv6SourcePrefix net.IP
 }
 
-func (backend *TCPDialer) checkBackend(network string, address string) error {
+func (backend *TCPDialer) checkBackend(address string) error {
 	host, _, err := net.SplitHostPort(address)
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (Backend
 	dialer := net.Dialer{
 		Timeout: 5 * time.Second,
 		Control: func(network string, address string, c syscall.RawConn) error {
-			if err := backend.checkBackend(network, address); err != nil {
+			if err := backend.checkBackend(address); err != nil {
 				return err
 			}
 			if backend.IPv6SourcePrefix != nil {
