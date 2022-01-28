@@ -13,7 +13,7 @@ func main() {
 	var flags struct {
 		listen          []string
 		defaultHostname string
-		backendType     string
+		mode            string
 		proxyProto      bool
 		unixDirectory   string
 		backendCidr     []*net.IPNet
@@ -25,10 +25,10 @@ func main() {
 		return nil
 	})
 	flag.StringVar(&flags.defaultHostname, "default-hostname", "", "Default hostname if client does not provide SNI")
-	flag.StringVar(&flags.backendType, "backend-type", "", "unix, tcp, or nat46")
+	flag.StringVar(&flags.mode, "mode", "", "unix, tcp, or nat46")
 	flag.BoolVar(&flags.proxyProto, "proxy-proto", false, "Use PROXY protocol when talking to backend")
-	flag.StringVar(&flags.unixDirectory, "unix-directory", "", "Path to directory containing backend UNIX sockets (unix backends)")
-	flag.Func("backend-cidr", "CIDR of allowed backends (repeatable) (tcp, nat46 backends)", func(arg string) error {
+	flag.StringVar(&flags.unixDirectory, "unix-directory", "", "Path to directory containing backend UNIX sockets (unix mode)")
+	flag.Func("backend-cidr", "CIDR of allowed backends (repeatable) (tcp, nat46 modes)", func(arg string) error {
 		_, ipnet, err := net.ParseCIDR(arg)
 		if err != nil {
 			return err
@@ -36,8 +36,8 @@ func main() {
 		flags.backendCidr = append(flags.backendCidr, ipnet)
 		return nil
 	})
-	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (tcp, nat46 backends)")
-	flag.Func("nat46-prefix", "IPv6 prefix for NAT64 source address (nat46 backends)", func(arg string) error {
+	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (tcp, nat46 modes)")
+	flag.Func("nat46-prefix", "IPv6 prefix for NAT64 source address (nat46 mode)", func(arg string) error {
 		flags.nat46Prefix = net.ParseIP(arg)
 		if flags.nat46Prefix == nil {
 			return fmt.Errorf("not a valid IP address")
@@ -54,7 +54,7 @@ func main() {
 		DefaultHostname: flags.defaultHostname,
 	}
 
-	switch flags.backendType {
+	switch flags.mode {
 	case "unix":
 		if flags.unixDirectory == "" {
 			log.Fatal("-unix-directory must be specified when you use -backend unix")
@@ -74,7 +74,7 @@ func main() {
 		}
 		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr, IPv6SourcePrefix: flags.nat46Prefix}
 	default:
-		log.Fatal("-backend-type must be unix, tcp, or nat46")
+		log.Fatal("-mode must be unix, tcp, or nat46")
 	}
 
 	if len(flags.listen) == 0 {
