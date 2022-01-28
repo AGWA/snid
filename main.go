@@ -10,25 +10,13 @@ import (
 	"src.agwa.name/go-listener"
 )
 
-func parseCIDRs(strings []string) ([]*net.IPNet, error) {
-	cidrs := make([]*net.IPNet, len(strings))
-	for i := range strings {
-		var err error
-		_, cidrs[i], err = net.ParseCIDR(strings[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return cidrs, nil
-}
-
 func main() {
 	var (
 		listenArgs       []string
 		proxy            bool
 		backendArg       string
 		ipv6SourcePrefix net.IP
-		allowArgs        []string
+		allowed          []*net.IPNet
 		defaultHostname  string
 	)
 
@@ -49,7 +37,11 @@ func main() {
 		return nil
 	})
 	flag.Func("allow", "CIDR of allowed backends (repeatable)", func(arg string) error {
-		allowArgs = append(allowArgs, arg)
+		_, ipnet, err := net.ParseCIDR(arg)
+		if err != nil {
+			return err
+		}
+		allowed = append(allowed, ipnet)
 		return nil
 	})
 	flag.StringVar(&defaultHostname, "default-hostname", "", "Default hostname if client does not provide SNI")
@@ -64,12 +56,8 @@ func main() {
 		server.Backend = &UnixDialer{Directory: backendArg}
 	} else if strings.HasPrefix(backendArg, ":") {
 		port := strings.TrimPrefix(backendArg, ":")
-		if len(allowArgs) == 0 {
+		if len(allowed) == 0 {
 			log.Fatal("At least one -allow flag must be specified when you use TCP backends")
-		}
-		allowed, err := parseCIDRs(allowArgs)
-		if err != nil {
-			log.Fatal(err)
 		}
 		server.Backend = &TCPDialer{Port: port, Allowed: allowed, IPv6SourcePrefix: ipv6SourcePrefix}
 	} else {
