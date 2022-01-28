@@ -5,70 +5,83 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 
 	"src.agwa.name/go-listener"
 )
 
 func main() {
-	var (
-		listenArgs       []string
-		proxy            bool
-		backendArg       string
-		ipv6SourcePrefix net.IP
-		allowed          []*net.IPNet
-		defaultHostname  string
-	)
-
+	var flags struct {
+		listen          []string
+		defaultHostname string
+		backendType     string
+		proxyProto      bool
+		unixDirectory   string
+		backendCidr     []*net.IPNet
+		backendPort     int
+		nat46Prefix     net.IP
+	}
 	flag.Func("listen", "Socket to listen on (repeatable)", func(arg string) error {
-		listenArgs = append(listenArgs, arg)
+		flags.listen = append(flags.listen, arg)
 		return nil
 	})
-	flag.BoolVar(&proxy, "proxy", false, "Use PROXY protocol when talking to backend")
-	flag.StringVar(&backendArg, "backend", "", ":PORT or /path/to/socket/dir for backends")
-	flag.Func("ipv6-source-prefix", "IPv6 source prefix for embedding client IPv4 address", func(arg string) error {
-		ipv6SourcePrefix = net.ParseIP(arg)
-		if ipv6SourcePrefix == nil {
-			return fmt.Errorf("not a valid IP address")
-		}
-		if ipv6SourcePrefix.To4() != nil {
-			return fmt.Errorf("not an IPv6 address")
-		}
-		return nil
-	})
-	flag.Func("allow", "CIDR of allowed backends (repeatable)", func(arg string) error {
+	flag.StringVar(&flags.defaultHostname, "default-hostname", "", "Default hostname if client does not provide SNI")
+	flag.StringVar(&flags.backendType, "backend-type", "", "unix, tcp, or nat46")
+	flag.BoolVar(&flags.proxyProto, "proxy-proto", false, "Use PROXY protocol when talking to backend")
+	flag.StringVar(&flags.unixDirectory, "unix-directory", "", "Path to directory containing backend UNIX sockets (unix backends)")
+	flag.Func("backend-cidr", "CIDR of allowed backends (repeatable) (tcp, nat46 backends)", func(arg string) error {
 		_, ipnet, err := net.ParseCIDR(arg)
 		if err != nil {
 			return err
 		}
-		allowed = append(allowed, ipnet)
+		flags.backendCidr = append(flags.backendCidr, ipnet)
 		return nil
 	})
-	flag.StringVar(&defaultHostname, "default-hostname", "", "Default hostname if client does not provide SNI")
+	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (tcp, nat46 backends)")
+	flag.Func("nat46-prefix", "IPv6 prefix for NAT64 source address (nat46 backends)", func(arg string) error {
+		flags.nat46Prefix = net.ParseIP(arg)
+		if flags.nat46Prefix == nil {
+			return fmt.Errorf("not a valid IP address")
+		}
+		if flags.nat46Prefix.To4() != nil {
+			return fmt.Errorf("not an IPv6 address")
+		}
+		return nil
+	})
 	flag.Parse()
 
 	server := &Server{
-		ProxyProtocol:   proxy,
-		DefaultHostname: defaultHostname,
+		ProxyProtocol:   flags.proxyProto,
+		DefaultHostname: flags.defaultHostname,
 	}
 
-	if strings.HasPrefix(backendArg, "/") {
-		server.Backend = &UnixDialer{Directory: backendArg}
-	} else if strings.HasPrefix(backendArg, ":") {
-		port := strings.TrimPrefix(backendArg, ":")
-		if len(allowed) == 0 {
-			log.Fatal("At least one -allow flag must be specified when you use TCP backends")
+	switch flags.backendType {
+	case "unix":
+		if flags.unixDirectory == "" {
+			log.Fatal("-unix-directory must be specified when you use -backend unix")
 		}
-		server.Backend = &TCPDialer{Port: port, Allowed: allowed, IPv6SourcePrefix: ipv6SourcePrefix}
-	} else {
-		log.Fatal("-backend must be a TCP port number (e.g. :443) or a path to a socket directory")
+		server.Backend = &UnixDialer{Directory: flags.unixDirectory}
+	case "tcp":
+		if len(flags.backendCidr) == 0 {
+			log.Fatal("At least one -backend-cidr flag must be specified when you use -backend tcp")
+		}
+		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr}
+	case "nat46":
+		if len(flags.backendCidr) == 0 {
+			log.Fatal("At least one -backend-cidr flag must be specified when you use -backend nat46")
+		}
+		if flags.nat46Prefix == nil {
+			log.Fatal("-nat46-prefix must be specified when you use -backend nat46")
+		}
+		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr, IPv6SourcePrefix: flags.nat46Prefix}
+	default:
+		log.Fatal("-backend-type must be unix, tcp, or nat46")
 	}
 
-	if len(listenArgs) == 0 {
+	if len(flags.listen) == 0 {
 		log.Fatal("At least one -listen flag must be specified")
 	}
 
-	listeners, err := listener.OpenAll(listenArgs)
+	listeners, err := listener.OpenAll(flags.listen)
 	if err != nil {
 		log.Fatal(err)
 	}

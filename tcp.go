@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"syscall"
 	"time"
 )
 
 type TCPDialer struct {
-	Port    string
+	Port    int
 	Allowed []*net.IPNet
 
 	IPv6SourcePrefix net.IP
@@ -81,7 +82,7 @@ func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (Backend
 		},
 	}
 
-	conn, err := dialer.Dial(backend.network(), net.JoinHostPort(hostname, backend.Port))
+	conn, err := dialer.Dial(backend.network(), net.JoinHostPort(hostname, strconv.Itoa(backend.Port)))
 	if err != nil {
 		return nil, err
 	}
