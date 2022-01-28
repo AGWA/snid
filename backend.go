@@ -9,6 +9,11 @@ type BackendConn interface {
 	CloseWrite() error
 }
 
+type ClientConn interface {
+	LocalAddr() net.Addr
+	RemoteAddr() net.Addr
+}
+
 type BackendDialer interface {
-	Dial(string, net.Addr) (BackendConn, error)
+	Dial(string, ClientConn) (BackendConn, error)
 }

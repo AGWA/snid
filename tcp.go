@@ -32,8 +32,8 @@ func (backend *TCPDialer) checkBackend(address string) error {
 	return fmt.Errorf("%s is not an allowed backend", ipaddress)
 }
 
-func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientAddress net.Addr) error {
-	clientTCPAddress, isTCP := clientAddress.(*net.TCPAddr)
+func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientConn ClientConn) error {
+	clientTCPAddress, isTCP := clientConn.RemoteAddr().(*net.TCPAddr)
 	if !isTCP {
 		return fmt.Errorf("client is not connected using TCP")
 	}
@@ -58,6 +58,18 @@ func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientAddress net.Addr)
 	return controlErr
 }
 
+func (backend *TCPDialer) port(clientConn ClientConn) (int, error) {
+	if backend.Port != 0 {
+		return backend.Port, nil
+	}
+
+	localTCPAddress, isTCP := clientConn.LocalAddr().(*net.TCPAddr)
+	if !isTCP {
+		return 0, fmt.Errorf("cannot determine backend port number because client is not connected using TCP")
+	}
+	return localTCPAddress.Port, nil
+}
+
 func (backend *TCPDialer) network() string {
 	if backend.IPv6SourcePrefix != nil {
 		return "tcp6"
@@ -66,7 +78,12 @@ func (backend *TCPDialer) network() string {
 	}
 }
 
-func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (BackendConn, error) {
+func (backend *TCPDialer) Dial(hostname string, clientConn ClientConn) (BackendConn, error) {
+	port, err := backend.port(clientConn)
+	if err != nil {
+		return nil, err
+	}
+
 	dialer := net.Dialer{
 		Timeout: 5 * time.Second,
 		Control: func(network string, address string, c syscall.RawConn) error {
@@ -74,7 +91,7 @@ func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (Backend
 				return err
 			}
 			if backend.IPv6SourcePrefix != nil {
-				if err := backend.bindIPv6(c, clientAddress); err != nil {
+				if err := backend.bindIPv6(c, clientConn); err != nil {
 					return err
 				}
 			}
@@ -82,7 +99,7 @@ func (backend *TCPDialer) Dial(hostname string, clientAddress net.Addr) (Backend
 		},
 	}
 
-	conn, err := dialer.Dial(backend.network(), net.JoinHostPort(hostname, strconv.Itoa(backend.Port)))
+	conn, err := dialer.Dial(backend.network(), net.JoinHostPort(hostname, strconv.Itoa(port)))
 	if err != nil {
 		return nil, err
 	}
