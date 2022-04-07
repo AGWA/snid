@@ -82,26 +82,26 @@ func main() {
 	switch flags.mode {
 	case "unix":
 		if flags.unixDirectory == "" {
-			log.Fatal("-unix-directory must be specified when you use -backend unix")
+			log.Fatal("-unix-directory must be specified when you use -mode unix")
 		}
 		server.Backend = &UnixDialer{Directory: flags.unixDirectory}
 	case "tcp":
 		if len(flags.backendCidr) == 0 {
-			log.Fatal("At least one -backend-cidr flag must be specified when you use -backend tcp")
+			log.Fatal("At least one -backend-cidr flag must be specified when you use -mode tcp")
 		}
 		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr}
 	case "nat46":
 		if flags.proxyProto {
-			log.Fatal("-proxy-proto must not be specified when you use -backend nat46")
+			log.Fatal("-proxy-proto must not be specified when you use -mode nat46")
 		}
 		if flags.backendPort != 0 {
-			log.Fatal("-backend-port must not be specified when you use -backend nat46")
+			log.Fatal("-backend-port must not be specified when you use -mode nat46")
 		}
 		if len(flags.backendCidr) == 0 {
-			log.Fatal("At least one -backend-cidr flag must be specified when you use -backend nat46")
+			log.Fatal("At least one -backend-cidr flag must be specified when you use -mode nat46")
 		}
 		if flags.nat46Prefix == nil {
-			log.Fatal("-nat46-prefix must be specified when you use -backend nat46")
+			log.Fatal("-nat46-prefix must be specified when you use -mode nat46")
 		}
 		server.Backend = &TCPDialer{Allowed: flags.backendCidr, IPv6SourcePrefix: flags.nat46Prefix}
 	default:
