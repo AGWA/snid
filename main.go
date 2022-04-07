@@ -61,7 +61,7 @@ func main() {
 		flags.backendCidr = append(flags.backendCidr, ipnet)
 		return nil
 	})
-	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (tcp, nat46 modes)")
+	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (defaults to same port number as listener) (tcp, nat46 modes)")
 	flag.Func("nat46-prefix", "IPv6 prefix for NAT46 source address (nat46 mode)", func(arg string) error {
 		flags.nat46Prefix = net.ParseIP(arg)
 		if flags.nat46Prefix == nil {
