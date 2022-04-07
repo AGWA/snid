@@ -51,7 +51,7 @@ func main() {
 	})
 	flag.StringVar(&flags.defaultHostname, "default-hostname", "", "Default hostname if client does not provide SNI")
 	flag.StringVar(&flags.mode, "mode", "", "unix, tcp, or nat46")
-	flag.BoolVar(&flags.proxyProto, "proxy-proto", false, "Use PROXY protocol when talking to backend")
+	flag.BoolVar(&flags.proxyProto, "proxy-proto", false, "Use PROXY protocol when talking to backend (tcp, unix modes)")
 	flag.StringVar(&flags.unixDirectory, "unix-directory", "", "Path to directory containing backend UNIX sockets (unix mode)")
 	flag.Func("backend-cidr", "CIDR of allowed backends (repeatable) (tcp, nat46 modes)", func(arg string) error {
 		_, ipnet, err := net.ParseCIDR(arg)
@@ -91,6 +91,9 @@ func main() {
 		}
 		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr}
 	case "nat46":
+		if flags.proxyProto {
+			log.Fatal("-proxy-proto must not be specified when you use -backend nat46")
+		}
 		if flags.backendPort != 0 {
 			log.Fatal("-backend-port must not be specified when you use -backend nat46")
 		}
