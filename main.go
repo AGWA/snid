@@ -61,7 +61,7 @@ func main() {
 		flags.backendCidr = append(flags.backendCidr, ipnet)
 		return nil
 	})
-	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (defaults to same port number as listener) (tcp, nat46 modes)")
+	flag.IntVar(&flags.backendPort, "backend-port", 0, "Port number of backend (defaults to same port number as listener) (tcp mode)")
 	flag.Func("nat46-prefix", "IPv6 prefix for NAT46 source address (nat46 mode)", func(arg string) error {
 		flags.nat46Prefix = net.ParseIP(arg)
 		if flags.nat46Prefix == nil {
@@ -91,13 +91,16 @@ func main() {
 		}
 		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr}
 	case "nat46":
+		if flags.backendPort != 0 {
+			log.Fatal("-backend-port must not be specified when you use -backend nat46")
+		}
 		if len(flags.backendCidr) == 0 {
 			log.Fatal("At least one -backend-cidr flag must be specified when you use -backend nat46")
 		}
 		if flags.nat46Prefix == nil {
 			log.Fatal("-nat46-prefix must be specified when you use -backend nat46")
 		}
-		server.Backend = &TCPDialer{Port: flags.backendPort, Allowed: flags.backendCidr, IPv6SourcePrefix: flags.nat46Prefix}
+		server.Backend = &TCPDialer{Allowed: flags.backendCidr, IPv6SourcePrefix: flags.nat46Prefix}
 	default:
 		log.Fatal("-mode must be unix, tcp, or nat46")
 	}
