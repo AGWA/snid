@@ -2,6 +2,12 @@
 
 snid is a lightweight proxy server that forwards TLS connections based on the server name indication (SNI) hostname.  snid favors convention over configuration - backend addresses are not configured individually, but rather constructed based on DNS record lookups or filesystem locations.  This makes snid deployments easy to manage.
 
+## Installing snid
+
+```
+go install src.agwa.name/go-listener/cmd/snid@latest
+```
+
 ## Command Line Arguments
 
 ### `-listen LISTENER` (Mandatory)
