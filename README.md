@@ -5,7 +5,7 @@ snid is a lightweight proxy server that forwards TLS connections based on the se
 ## Installing snid
 
 ```
-go install src.agwa.name/go-listener/cmd/snid@latest
+go install src.agwa.name/snid@latest
 ```
 
 ## Command Line Arguments
