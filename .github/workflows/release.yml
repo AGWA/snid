@@ -1,0 +1,42 @@
+on:
+  release:
+    types: [published]
+name: Publish Release Binaries
+jobs:
+  release:
+    name: Build and Upload Release Binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.x
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Build binaries
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "snid-${{ github.event.release.name }}-linux-amd64"
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -o "snid-${{ github.event.release.name }}-linux-arm"
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o "snid-${{ github.event.release.name }}-linux-arm64"
+          CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o "snid-${{ github.event.release.name }}-linux-386"
+      - name: Upload binaries
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs").promises;
+            const { repo: { owner, repo }, sha } = context;
+
+            for (let filename of await fs.readdir(".")) {
+              if (filename.startsWith("snid-")) {
+                console.log("Uploading", filename);
+                await github.repos.uploadReleaseAsset({
+                  owner, repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename,
+                  data: await fs.readFile(filename),
+                });
+              }
+            }
