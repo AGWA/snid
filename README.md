@@ -12,7 +12,7 @@ go install src.agwa.name/snid@latest
 
 ### `-listen LISTENER` (Mandatory)
 
-Listen on the given address, provided in [go-listener syntax](https://github.com/AGWA/go-listener#listener-syntax).  You can specify the `-listen` flag multiple times to listen on multiple addresses.
+Listen on the given address, provided in [go-listener syntax](https://pkg.go.dev/src.agwa.name/go-listener#readme-listener-syntax).  You can specify the `-listen` flag multiple times to listen on multiple addresses.
 
 Examples:
 * `-listen tcp:443` to listen on TCP port 443, all interfaces.
