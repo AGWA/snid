@@ -4,9 +4,15 @@ snid is a lightweight proxy server that forwards TLS connections based on the se
 
 ## Installing snid
 
+If you have the latest version of Go installed, you can run:
+
 ```
 go install src.agwa.name/snid@latest
 ```
+
+Or, you can download a binary from the [GitHub Releases Page](https://github.com/AGWA/snid/releases).
+
+snid is a single statically-linked binary so using Docker or a similar technology is superfluous.
 
 ## Command Line Arguments
 
