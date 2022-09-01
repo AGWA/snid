@@ -2,3 +2,7 @@ src.agwa.name/go-listener v0.2.0 h1:HZHMLbwjXle8ZN97SkTgAIi4nsp08aEDq4uY7D0EU8Y=
 src.agwa.name/go-listener v0.2.0/go.mod h1:jitkAgaNrvQ/EFaVPO/aIJytWYdF6Bk2Gmbbm8hw14Y=
 src.agwa.name/go-listener v0.3.0 h1:DY0df9lMiknYjpfD2GYqhG07SCnyOiIkQaPd2yUC2tY=
 src.agwa.name/go-listener v0.3.0/go.mod h1:naXgwyLIMwmT0rPc3FWeyvKtOcHcpV8FW4Be3rB7zjw=
+src.agwa.name/go-listener v0.3.1 h1:LBQNeXfMor/HDfa4frmurzOLBlGDmp3GkPYTicY0Drg=
+src.agwa.name/go-listener v0.3.1/go.mod h1:naXgwyLIMwmT0rPc3FWeyvKtOcHcpV8FW4Be3rB7zjw=
+src.agwa.name/go-listener v0.4.0 h1:h5LPiKh2YUFjuer+2G6bUDZBFTrFM5j9St0gLyFh55s=
+src.agwa.name/go-listener v0.4.0/go.mod h1:rpJv/8nIn70oIgbkm21MDSc6NgzzcWa8RYwXfMWn6kg=
