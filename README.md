@@ -22,6 +22,7 @@ Listen on the given address, provided in [go-listener syntax](https://pkg.go.dev
 
 Examples:
 * `-listen tcp:443` to listen on TCP port 443, all interfaces.
+* `-listen tcp:0.0.0.0:443` to listen on TCP port 443, all IPv4 interfaces.
 * `-listen tcp:192.0.2.4:443` to listen on TCP port 443 on 192.0.2.4.
 
 ### `-mode nat46`, `-mode tcp`, or `-mode unix` (Mandatory)
