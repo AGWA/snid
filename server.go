@@ -80,7 +80,7 @@ func (server *Server) handleConnection(clientConn net.Conn) {
 		return
 	}
 
-	backendConn, err := server.Backend.Dial(clientHello.ServerName, clientConn)
+	backendConn, err := server.Backend.Dial(clientHello.ServerName, clientHello.SupportedProtos, clientConn)
 	if err != nil {
 		log.Printf("Ignoring connection from %s because dialing backend failed: %s", clientConn.RemoteAddr(), err)
 		return

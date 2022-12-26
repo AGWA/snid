@@ -37,7 +37,7 @@ type UnixDialer struct {
 	Directory string
 }
 
-func (backend *UnixDialer) Dial(origHostname string, clientConn ClientConn) (BackendConn, error) {
+func (backend *UnixDialer) Dial(origHostname string, protocols []string, clientConn ClientConn) (BackendConn, error) {
 	hostname, err := canonicalizeHostname(origHostname)
 	if err != nil {
 		return nil, fmt.Errorf("invalid hostname %q", origHostname)

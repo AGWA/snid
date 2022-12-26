@@ -40,5 +40,5 @@ type ClientConn interface {
 }
 
 type BackendDialer interface {
-	Dial(string, ClientConn) (BackendConn, error)
+	Dial(string, []string, ClientConn) (BackendConn, error)
 }

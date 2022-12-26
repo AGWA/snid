@@ -103,12 +103,7 @@ func (backend *TCPDialer) network() string {
 	}
 }
 
-func (backend *TCPDialer) Dial(hostname string, clientConn ClientConn) (BackendConn, error) {
-	port, err := backend.port(clientConn)
-	if err != nil {
-		return nil, err
-	}
-
+func (backend *TCPDialer) Dial(hostname string, protocols []string, clientConn ClientConn) (BackendConn, error) {
 	dialer := net.Dialer{
 		Timeout: 5 * time.Second,
 		Control: func(network string, address string, c syscall.RawConn) error {
@@ -124,6 +119,18 @@ func (backend *TCPDialer) Dial(hostname string, clientConn ClientConn) (BackendC
 		},
 	}
 
+	if service := getSRVService(protocols); service != "" {
+		conn, err := dialSRV(dialer, backend.network(), hostname, service)
+		if err != nil {
+			return nil, err
+		}
+		return conn.(*net.TCPConn), nil
+	}
+
+	port, err := backend.port(clientConn)
+	if err != nil {
+		return nil, err
+	}
 	conn, err := dialer.Dial(backend.network(), net.JoinHostPort(hostname, strconv.Itoa(port)))
 	if err != nil {
 		return nil, err
