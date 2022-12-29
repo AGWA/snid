@@ -13,14 +13,12 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.x
-      - name: Checkout repository
-        uses: actions/checkout@v2
       - name: Build binaries
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "snid-${{ github.event.release.name }}-linux-amd64"
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build -o "snid-${{ github.event.release.name }}-linux-arm"
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o "snid-${{ github.event.release.name }}-linux-arm64"
-          CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o "snid-${{ github.event.release.name }}-linux-386"
+          GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go install src.agwa.name/snid/...@${{ github.event.release.name }}
+          GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=arm go install src.agwa.name/snid/...@${{ github.event.release.name }}
+          GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go install src.agwa.name/snid/...@${{ github.event.release.name }}
+          GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=386 go install src.agwa.name/snid/...@${{ github.event.release.name }}
       - name: Upload binaries
         uses: actions/github-script@v3
         with:
@@ -29,14 +27,33 @@ jobs:
             const fs = require("fs").promises;
             const { repo: { owner, repo }, sha } = context;
 
-            for (let filename of await fs.readdir(".")) {
-              if (filename.startsWith("snid-")) {
-                console.log("Uploading", filename);
-                await github.repos.uploadReleaseAsset({
-                  owner, repo,
-                  release_id: ${{ github.event.release.id }},
-                  name: filename,
-                  data: await fs.readFile(filename),
-                });
-              }
-            }
+            await github.repos.uploadReleaseAsset({
+              owner, repo,
+              release_id: ${{ github.event.release.id }},
+              name: "snid-${{ github.event.release.name }}-linux-amd64",
+              data: await fs.readFile("${{ runner.temp }}/go/bin/snid"),
+            });
+            await github.repos.uploadReleaseAsset({
+              owner, repo,
+              release_id: ${{ github.event.release.id }},
+              name: "snid-${{ github.event.release.name }}-linux-arm",
+              data: await fs.readFile("${{ runner.temp }}/go/bin/linux_arm/snid"),
+            });
+            await github.repos.uploadReleaseAsset({
+              owner, repo,
+              release_id: ${{ github.event.release.id }},
+              name: "snid-${{ github.event.release.name }}-linux-arm64",
+              data: await fs.readFile("${{ runner.temp }}/go/bin/linux_arm64/snid"),
+            });
+            await github.repos.uploadReleaseAsset({
+              owner, repo,
+              release_id: ${{ github.event.release.id }},
+              name: "snid-${{ github.event.release.name }}-linux-386",
+              data: await fs.readFile("${{ runner.temp }}/go/bin/linux_386/snid"),
+            });
+            await github.repos.uploadReleaseAsset({
+              owner, repo,
+              release_id: ${{ github.event.release.id }},
+              name: "sum.golang.org-sth",
+              data: await fs.readFile("${{ runner.temp }}/go/pkg/sumdb/sum.golang.org/latest"),
+            });
