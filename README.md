@@ -36,7 +36,7 @@ Use the given hostname if a client does not include the SNI extension.  If this 
 
 ## NAT46 mode
 
-In NAT46 mode, snid does an AAAA record lookup on the SNI hostname and forwards the connection there, as long as the IPv6 address is within one of the networks specified by `-backend-cidr`.  The client's IPv4 address is embedded in the lower 4 bytes of the source address used for connecting to the backend, with the prefix specified by `-nat46-prefix`.
+In NAT46 mode, snid does a DNS lookup on the SNI hostname to determine its IPv6 address and forwards the connection there, as long as the IPv6 address is within one of the networks specified by `-backend-cidr`.  The client's IPv4 address is embedded in the lower 4 bytes of the source address used for connecting to the backend, with the prefix specified by `-nat46-prefix`.
 
 Note: in NAT46 mode, clients which connect to snid over IPv6 will be disconnected. Instead, IPv6 clients should connect directly to the backend.
 
@@ -65,7 +65,7 @@ Example: `-backend-cidr 2001:db8::/64`
 
 ## TCP mode
 
-In TCP mode, snid does an A/AAAA record lookup on the SNI hostname and forwards the connection there, as long as the IP address is within one of the networks specified by `-backend-cidr`.
+In TCP mode, snid does a DNS record lookup on the SNI hostname to determine its IPv4 or IPv6 address and forwards the connection there, as long as the IP address is within one of the networks specified by `-backend-cidr`.
 
 The following flags can be specified in TCP mode:
 
@@ -101,3 +101,18 @@ The path to the directory containing UNIX domain sockets.
 ### `-proxy-proto` (Optional)
 
 Use [PROXY protocol v2](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) to convey the client IP address to the backend.
+
+## DNS Lookup Behavior
+
+In NAT46 and TCP modes, snid does a DNS lookup on the SNI hostname to determine the backend's IP address.  snid attempts to emulate the DNS lookup behavior that a TLS client would use if connecting directly to the backend.  Normally, snid does an A/AAAA record lookup directly on the hostname, but if the TLS handshake specifies exactly one ALPN value for a protocol which uses SRV records, then snid will do a SRV record lookup instead.
+
+The following ALPN values are recognized:
+
+| Sole ALPN Value    | SRV Service             |
+| ------------------ | ----------------------- |
+| `xmpp-client`      | `_xmpps-client._tcp`    |
+| `xmpp-server`      | `_xmpps-server._tcp`    |
+
+For example, if the handshake specifies the SNI hostname `example.com` and the ALPN protcols `h2` and `http/1.1`, then snid will look up the A/AAAA records for `example.com` and forward the connection there, since that's how an HTTP client works.
+
+If the handshake specifies the SNI hostname `example.com` and the ALPN protcol `xmpp-client`, then snid will do a SRV record lookup for `_xmpps-client._tcp.example.com`'.  If this returns a SRV record for `xmpp.example.com`, then snid will look up the A/AAAA records for `xmpp.example.com` and forward the connection there, since that's how an XMPP client works.
