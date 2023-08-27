@@ -6,3 +6,5 @@ src.agwa.name/go-listener v0.3.1 h1:LBQNeXfMor/HDfa4frmurzOLBlGDmp3GkPYTicY0Drg=
 src.agwa.name/go-listener v0.3.1/go.mod h1:naXgwyLIMwmT0rPc3FWeyvKtOcHcpV8FW4Be3rB7zjw=
 src.agwa.name/go-listener v0.4.0 h1:h5LPiKh2YUFjuer+2G6bUDZBFTrFM5j9St0gLyFh55s=
 src.agwa.name/go-listener v0.4.0/go.mod h1:rpJv/8nIn70oIgbkm21MDSc6NgzzcWa8RYwXfMWn6kg=
+src.agwa.name/go-listener v0.5.0 h1:UjXAdtPKO1o1T/6B25TlpJaG/EJao+UvUEpRZuGy8iA=
+src.agwa.name/go-listener v0.5.0/go.mod h1:vM7zjlskRnSbxbS8QTWYQIOfuKsn8SdJQH28RtouDTI=
