@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -36,6 +37,5 @@ func dialSRV(dialer net.Dialer, network string, hostname string, service string)
 		}
 		errs = append(errs, err)
 	}
-	// TODO (Go 1.20): return nil, errors.Join(errs...)
-	return nil, errs[0]
+	return nil, errors.Join(errs...)
 }
