@@ -66,7 +66,7 @@ func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientConn ClientConn) 
 	if clientIPv4 == nil {
 		return fmt.Errorf("client is not connected using IPv4")
 	}
-	sourceIPv6 := make(net.IP, 16)
+	var sourceIPv6 [16]byte
 	copy(sourceIPv6[:12], backend.IPv6SourcePrefix)
 	copy(sourceIPv6[12:], clientIPv4)
 
@@ -76,7 +76,7 @@ func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientConn ClientConn) 
 		if controlErr != nil {
 			return
 		}
-		controlErr = syscall.Bind(int(fd), &syscall.SockaddrInet6{Addr: *(*[16]byte)(sourceIPv6)})
+		controlErr = syscall.Bind(int(fd), &syscall.SockaddrInet6{Addr: sourceIPv6})
 	}); err != nil {
 		return err
 	}
