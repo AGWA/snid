@@ -76,7 +76,11 @@ func (backend *TCPDialer) bindIPv6(sock syscall.RawConn, clientConn ClientConn) 
 		if controlErr != nil {
 			return
 		}
-		controlErr = syscall.Bind(int(fd), &syscall.SockaddrInet6{Addr: sourceIPv6})
+		controlErr = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+		if controlErr != nil {
+			return
+		}
+		controlErr = syscall.Bind(int(fd), &syscall.SockaddrInet6{Addr: sourceIPv6, Port: clientTCPAddress.Port})
 	}); err != nil {
 		return err
 	}
