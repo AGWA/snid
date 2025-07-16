@@ -115,4 +115,4 @@ The following ALPN values are recognized:
 
 For example, if the handshake specifies the SNI hostname `example.com` and the ALPN protcols `h2` and `http/1.1`, then snid will look up the A/AAAA records for `example.com` and forward the connection there, since that's how an HTTP client works.
 
-If the handshake specifies the SNI hostname `example.com` and the ALPN protcol `xmpp-client`, then snid will do a SRV record lookup for `_xmpps-client._tcp.example.com`'.  If this returns a SRV record for `xmpp.example.com`, then snid will look up the A/AAAA records for `xmpp.example.com` and forward the connection there, since that's how an XMPP client works.
+If the handshake specifies the SNI hostname `example.com` and the ALPN protcol `xmpp-client`, then snid will do a SRV record lookup for `_xmpps-client._tcp.example.com`.  If this returns a SRV record for `xmpp.example.com`, then snid will look up the A/AAAA records for `xmpp.example.com` and forward the connection there, since that's how an XMPP client works.
