@@ -65,7 +65,7 @@ Example: `-backend-cidr 2001:db8::/64`
 
 ## TCP mode
 
-In TCP mode, snid does a DNS record lookup on the SNI hostname to determine its IPv4 or IPv6 address and forwards the connection there, as long as the IP address is within one of the networks specified by `-backend-cidr`.
+In TCP mode, snid does a DNS record lookup on the SNI hostname to determine its IPv4 or IPv6 address and forwards the connection there, as long as the IP address is within one of the networks specified by `-backend-cidr`. TCP mode should be deployed with split horizon DNS: externally, your hostnames all resolve to the single public IP address which runs snid; internally, each resolves to the distinct private IP address which runs the backend.
 
 The following flags can be specified in TCP mode:
 
