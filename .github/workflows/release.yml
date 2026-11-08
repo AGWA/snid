@@ -10,7 +10,7 @@ jobs:
       contents: write
     steps:
       - name: Install Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v2.2.0
         with:
           go-version: 1.x
       - name: Build binaries
@@ -20,7 +20,7 @@ jobs:
           GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go install -trimpath src.agwa.name/snid/...@${{ github.event.release.name }}
           GOPATH=${{ runner.temp }}/go CGO_ENABLED=0 GOOS=linux GOARCH=386 go install -trimpath src.agwa.name/snid/...@${{ github.event.release.name }}
       - name: Upload binaries
-        uses: actions/github-script@v3
+        uses: actions/github-script@v3.2.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
